@@ -1,0 +1,137 @@
+.onboarding-form-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-progress {
+    height: 4px;
+    background: #e0e0e0;
+    margin-bottom: 30px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: #4CAF50;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.form-steps {
+    position: relative;
+    min-height: 200px;
+}
+
+.form-step {
+    display: none;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+}
+
+.form-step.active {
+    display: block;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.form-step.slide-out {
+    opacity: 0;
+    transform: translateX(-100%);
+}
+
+.form-step h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.form-input,
+.form-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.multiselect-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.multiselect-container label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.form-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    gap: 10px;
+}
+
+.form-navigation button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.next-step,
+.submit-form {
+    background: #4CAF50;
+    color: white;
+}
+
+.prev-step {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.next-step:hover,
+.submit-form:hover {
+    background: #45a049;
+}
+
+.prev-step:hover {
+    background: #e0e0e0;
+}
+
+/* Admin styles */
+.card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    margin-top: 20px;
+    padding: 20px;
+}
+
+.form-table th {
+    width: 200px;
+}
+
+.form-table td {
+    padding: 15px 10px;
+}
+
+.description {
+    color: #666;
+    font-style: italic;
+    margin-top: 5px;
+} 

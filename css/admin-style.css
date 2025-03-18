@@ -1,0 +1,220 @@
+#wpcontent {
+    padding-left: 0 !important;
+}
+
+.wrap {
+    max-width: none;
+    margin: 20px 40px;
+}
+
+/* Two column layout */
+.admin-columns {
+    display: flex;
+    gap: 30px;
+    margin: 20px 0;
+    width: 100%;
+}
+
+.admin-column {
+    min-width: 0; /* Prevents flex items from overflowing */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make the first column (new question form) take up 1 part */
+.admin-column:first-child {
+    flex: 1;
+}
+
+/* Make the second column (existing questions) take up 2 parts */
+.admin-column:last-child {
+    flex: 2;
+}
+
+.admin-column .card {
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0; /* Prevents table from forcing container width */
+    padding: 30px;
+    margin: 0;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    position: relative;
+}
+
+/* Table styling */
+.wp-list-table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+.wp-list-table th,
+.wp-list-table td {
+    padding: 12px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* Column widths for questions list */
+.wp-list-table td:first-child {
+    width: 40%;
+}
+
+.wp-list-table td:nth-child(2) {
+    width: 15%;
+}
+
+.wp-list-table td:nth-child(3) {
+    width: 30%;
+}
+
+.wp-list-table td:last-child {
+    width: 15%;
+    white-space: nowrap;
+}
+
+/* Ensure buttons in table are properly spaced */
+.wp-list-table .button {
+    margin: 0 4px;
+    min-height: 30px;
+    line-height: 28px;
+}
+
+/* Form table styling */
+.form-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.form-table th {
+    width: 120px;
+    padding: 20px 10px 20px 0;
+    vertical-align: top;
+}
+
+.form-table td {
+    padding: 20px 10px;
+}
+
+/* Form inputs */
+.form-table input[type="text"],
+.form-table select,
+.options-container {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Options styling */
+.options-container {
+    margin-top: 10px;
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.option-row input {
+    flex: 1;
+    margin-right: 8px;
+    min-height: 35px;
+}
+
+.option-row .button {
+    padding: 0 12px;
+    min-height: 35px;
+}
+
+/* Drag handle styling */
+.sortable-questions .dashicons-menu {
+    color: #50575e;
+    margin-right: 12px;
+    cursor: move;
+}
+
+.sortable-questions tr:hover .dashicons-menu {
+    color: #2271b1;
+}
+
+/* Drag and drop styling */
+.sortable-questions tr.ui-sortable-helper {
+    display: table;
+    border: 1px solid #c3c4c7;
+    background: #fff;
+    width: 100%;
+}
+
+.sortable-questions tr {
+    background: #fff;
+    cursor: move;
+}
+
+/* Description text */
+.description {
+    color: #646970;
+    font-style: italic;
+    margin: 4px 0;
+}
+
+/* Media placeholder */
+.media-placeholder {
+    margin-top: 15px;
+    padding: 30px;
+    background: #f0f0f1;
+    border: 1px dashed #c3c4c7;
+    text-align: center;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.media-placeholder:hover {
+    background: #f6f7f7;
+}
+
+.media-placeholder .dashicons {
+    font-size: 30px;
+    width: 30px;
+    height: 30px;
+    color: #646970;
+}
+
+.media-placeholder p {
+    margin: 10px 0 0;
+    color: #646970;
+}
+
+/* Responsive layout */
+@media screen and (max-width: 1200px) {
+    .admin-columns {
+        flex-direction: column;
+    }
+    
+    .admin-column {
+        width: 100%;
+    }
+    
+    .card {
+        margin-bottom: 30px;
+    }
+}
+
+.admin-column.questions-list {
+    max-width: none;
+    width: 100%;
+}
+
+.admin-column.questions-list .card {
+    max-width: none;
+    width: 100%;
+}
+
+.admin-column.questions-list .wp-list-table {
+    max-width: none;
+    width: 100%;
+    table-layout: fixed;
+} 
