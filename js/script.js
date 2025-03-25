@@ -1,114 +1,117 @@
 jQuery(document).ready(function($) {
-    const formContainer = $('.onboarding-form-container');
-    const formSteps = $('.form-step');
-    const progressBar = $('.progress-bar');
-    const nextButton = $('.next-step');
-    const prevButton = $('.prev-step');
-    const submitButton = $('.submit-form');
-    
-    let currentStep = 0;
-    let formData = {};
-    
-    // Initialize form data from localStorage if available
-    if (localStorage.getItem('onboardingFormData')) {
-        formData = JSON.parse(localStorage.getItem('onboardingFormData'));
-    }
+    var currentStep = 0;
+    var totalSteps = $('.form-step').length;
     
     // Update progress bar
     function updateProgress() {
-        const progress = ((currentStep + 1) / formSteps.length) * 100;
-        progressBar.css('width', progress + '%');
-    }
-    
-    // Save form data to localStorage
-    function saveFormData() {
-        localStorage.setItem('onboardingFormData', JSON.stringify(formData));
-    }
-    
-    // Load saved data for current step
-    function loadStepData() {
-        const currentStepElement = formSteps.eq(currentStep);
-        const questionId = currentStepElement.find('[data-question-id]').data('question-id');
-        
-        if (formData[questionId]) {
-            const input = currentStepElement.find('[data-question-id]');
-            if (input.is('select')) {
-                input.val(formData[questionId]);
-            } else if (input.is('input[type="text"]')) {
-                input.val(formData[questionId]);
-            } else if (input.is('div.multiselect-container')) {
-                formData[questionId].forEach(value => {
-                    input.find(`input[value="${value}"]`).prop('checked', true);
-                });
-            }
-        }
-    }
-    
-    // Save current step data
-    function saveStepData() {
-        const currentStepElement = formSteps.eq(currentStep);
-        const input = currentStepElement.find('[data-question-id]');
-        const questionId = input.data('question-id');
-        
-        if (input.is('select') || input.is('input[type="text"]')) {
-            formData[questionId] = input.val();
-        } else if (input.is('div.multiselect-container')) {
-            formData[questionId] = input.find('input:checked').map(function() {
-                return $(this).val();
-            }).get();
-        }
-        
-        saveFormData();
+        var progress = (currentStep / (totalSteps - 1)) * 100;
+        $('.progress-bar').css('width', progress + '%');
     }
     
     // Show/hide navigation buttons
     function updateNavigation() {
-        prevButton.toggle(currentStep > 0);
-        nextButton.toggle(currentStep < formSteps.length - 1);
-        submitButton.toggle(currentStep === formSteps.length - 1);
+        $('.prev-step').toggle(currentStep > 0);
+        $('.next-step').toggle(currentStep < totalSteps - 1);
+        $('.submit-form').toggle(currentStep === totalSteps - 1);
     }
     
-    // Animate to next step
-    function nextStep() {
-        saveStepData();
-        
-        if (currentStep < formSteps.length - 1) {
-            formSteps.eq(currentStep).removeClass('active').addClass('slide-out');
-            currentStep++;
-            formSteps.eq(currentStep).removeClass('slide-out').addClass('active');
-            loadStepData();
-            updateProgress();
-            updateNavigation();
+    // Navigate to step
+    function goToStep(step) {
+        $('.form-step').removeClass('active');
+        $('.form-step[data-step="' + step + '"]').addClass('active');
+        currentStep = step;
+        updateProgress();
+        updateNavigation();
+    }
+    
+    // Next button click
+    $('.next-step').on('click', function() {
+        if (currentStep < totalSteps - 1) {
+            goToStep(currentStep + 1);
         }
-    }
+    });
     
-    // Animate to previous step
-    function prevStep() {
+    // Previous button click
+    $('.prev-step').on('click', function() {
         if (currentStep > 0) {
-            formSteps.eq(currentStep).removeClass('active').addClass('slide-out');
-            currentStep--;
-            formSteps.eq(currentStep).removeClass('slide-out').addClass('active');
-            loadStepData();
-            updateProgress();
-            updateNavigation();
+            goToStep(currentStep - 1);
         }
+    });
+    
+    // Form submission
+    $('.onboarding-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        var formData = {};
+        var $form = $(this);
+        var $submitButton = $form.find('.submit-form');
+        
+        // Disable submit button and show loading state
+        $submitButton.prop('disabled', true).text('Verzenden...');
+        
+        // Collect form data
+        $('.form-step').each(function() {
+            var $step = $(this);
+            var questionId = $step.find('[data-question-id]').data('question-id');
+            
+            // Handle different input types
+            if ($step.find('select').length) {
+                formData[questionId] = $step.find('select').val();
+            } else if ($step.find('.multiselect-container').length) {
+                var selectedValues = [];
+                $step.find('input[type="checkbox"]:checked').each(function() {
+                    selectedValues.push($(this).val());
+                });
+                formData[questionId] = selectedValues;
+            } else {
+                formData[questionId] = $step.find('input[type="text"]').val();
+            }
+        });
+        
+        // Log form data for debugging
+        console.log('Form submission data:', formData);
+        
+        // Submit form data via AJAX
+        $.ajax({
+            url: onboardingFormSettings.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'onboarding_form_submit',
+                nonce: onboardingFormSettings.nonce,
+                formData: formData
+            },
+            success: function(response) {
+                if (response.success) {
+                    console.log('Form submitted successfully');
+                    console.log('Debug info:', response.data.debug);
+                    
+                    // Show success message
+                    var $successMessage = $('<div class="form-success-message">Formulier succesvol verzonden!</div>');
+                    $form.fadeOut(400, function() {
+                        $(this).after($successMessage);
+                        $successMessage.fadeIn();
+                    });
+                } else {
+                    console.error('Form submission failed');
+                    showFormError('Er is een fout opgetreden bij het verzenden van het formulier.');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', error);
+                showFormError('Er is een fout opgetreden bij het verzenden van het formulier.');
+            }
+        });
+    });
+    
+    // Helper function to show error message
+    function showFormError(message) {
+        var $errorMessage = $('<div class="form-error-message">' + message + '</div>');
+        $('.form-error-message').remove(); // Remove any existing error messages
+        $('.onboarding-form').before($errorMessage);
+        $('.submit-form').prop('disabled', false).text('Versturen');
     }
     
-    // Handle form submission
-    function submitForm() {
-        saveStepData();
-        // Here you can add AJAX call to save the form data to the server
-        alert('Formulier succesvol verzonden!');
-        localStorage.removeItem('onboardingFormData');
-    }
-    
-    // Event listeners
-    nextButton.on('click', nextStep);
-    prevButton.on('click', prevStep);
-    submitButton.on('click', submitForm);
-    
-    // Initialize form
+    // Initialize
     updateProgress();
     updateNavigation();
-    loadStepData();
 }); 

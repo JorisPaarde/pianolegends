@@ -1,15 +1,24 @@
+:root {
+    --color-primary: #000000;
+    --color-secondary: #800020;
+    --color-text: #C0C0C0;
+    --color-accent: #FFBF00;
+    --color-champagne: #F7E7CE;
+    --color-ivory: #FFFAF0;
+}
+
 .onboarding-form-container {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
-    background: #ffffff;
+    background: var(--color-ivory);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .form-progress {
     height: 4px;
-    background: #e0e0e0;
+    background: var(--color-text);
     margin-bottom: 30px;
     border-radius: 2px;
     overflow: hidden;
@@ -17,7 +26,7 @@
 
 .progress-bar {
     height: 100%;
-    background: #4CAF50;
+    background: var(--color-accent);
     width: 0;
     transition: width 0.3s ease;
 }
@@ -51,17 +60,25 @@
 
 .form-step h2 {
     margin-bottom: 20px;
-    color: #333;
+    color: var(--color-primary);
 }
 
 .form-input,
 .form-select {
     width: 100%;
     padding: 10px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--color-text);
     border-radius: 4px;
     margin-bottom: 15px;
     font-size: 16px;
+    background: var(--color-ivory);
+    color: var(--color-primary);
+}
+
+.form-input:focus,
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-accent);
 }
 
 .multiselect-container {
@@ -75,6 +92,15 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    color: var(--color-primary);
+}
+
+.multiselect-container label:hover {
+    background-color: var(--color-champagne);
+}
+
+.multiselect-container input[type="checkbox"] {
+    margin-right: 10px;
 }
 
 .form-navigation {
@@ -93,24 +119,24 @@
     transition: background-color 0.3s ease;
 }
 
-.next-step,
-.submit-form {
-    background: #4CAF50;
-    color: white;
+.prev-step {
+    background: var(--color-text);
+    color: var(--color-primary);
 }
 
-.prev-step {
-    background: #f5f5f5;
-    color: #333;
+.next-step,
+.submit-form {
+    background: var(--color-accent);
+    color: var(--color-primary);
+}
+
+.prev-step:hover {
+    background: var(--color-champagne);
 }
 
 .next-step:hover,
 .submit-form:hover {
-    background: #45a049;
-}
-
-.prev-step:hover {
-    background: #e0e0e0;
+    background: var(--color-champagne);
 }
 
 /* Admin styles */
@@ -134,4 +160,28 @@
     color: #666;
     font-style: italic;
     margin-top: 5px;
+}
+
+.form-success-message {
+    background-color: var(--color-secondary);
+    color: var(--color-ivory);
+    padding: 20px;
+    border-radius: 4px;
+    text-align: center;
+    margin: 20px 0;
+    display: none;
+}
+
+.form-error-message {
+    background-color: var(--color-secondary);
+    color: var(--color-ivory);
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
 } 

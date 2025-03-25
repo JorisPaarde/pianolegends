@@ -46,11 +46,10 @@ jQuery(document).ready(function($) {
                 data: {
                     action: 'update_question_order',
                     order: order,
-                    nonce: onboardingAjax.nonce // Use the nonce provided from PHP
+                    nonce: onboardingAjax.nonce
                 },
                 success: function(response) {
                     if (response.success) {
-                        // Optional: Show success message
                         console.log('Order updated successfully');
                     }
                 },

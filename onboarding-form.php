@@ -3,7 +3,7 @@
  * Plugin Name: Onboarding Form
  * Plugin URI: 
  * Description: Een stapsgewijze onboarding formulier met animaties
- * Version: 1.0.0
+ * Version: 1.1
  * Author: JpWebcreation
  * Author URI: https://jpwebcreation.nl/
  * License: GPL v2 or later
@@ -64,6 +64,16 @@ function onboarding_form_menu() {
         'onboarding_form_page', // Function to display the page
         'dashicons-welcome-write-blog', // Icon
         30 // Position
+    );
+    
+    // Add submenu for settings
+    add_submenu_page(
+        'onboarding-form',
+        'Instellingen',
+        'Instellingen',
+        'manage_options',
+        'onboarding-form-settings',
+        'onboarding_form_settings_page'
     );
 }
 add_action('admin_menu', 'onboarding_form_menu');
@@ -212,6 +222,14 @@ function onboarding_form_page() {
     if (isset($_GET['action']) && $_GET['action'] === 'edit' && isset($_GET['id'])) {
         $id = intval($_GET['id']);
         $question_to_edit = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id));
+        if ($question_to_edit === null) {
+            set_transient('onboarding_form_message', array(
+                'type' => 'error',
+                'message' => 'Vraag niet gevonden.'
+            ), 45);
+            echo '<script>window.location.href = "' . esc_url(admin_url('admin.php?page=onboarding-form')) . '";</script>';
+            exit;
+        }
         $editing = true;
     }
 
@@ -260,7 +278,7 @@ function onboarding_form_page() {
                                 <th><label for="question_text">Vraag</label></th>
                                 <td>
                                     <input type="text" name="question_text" id="question_text" class="regular-text" required 
-                                        value="<?php echo $editing ? esc_attr($question_to_edit->question_text) : ''; ?>">
+                                        value="<?php echo $editing && isset($question_to_edit->question_text) ? esc_attr($question_to_edit->question_text) : ''; ?>">
                                     <div class="media-placeholder">
                                         <span class="dashicons dashicons-images-alt2"></span>
                                         <p>Media toevoegen (binnenkort beschikbaar)</p>
@@ -271,9 +289,9 @@ function onboarding_form_page() {
                                 <th><label for="field_type">Type veld</label></th>
                                 <td>
                                     <select name="field_type" id="field_type" required>
-                                        <option value="text" <?php echo $editing && $question_to_edit->field_type === 'text' ? 'selected' : ''; ?>>Tekstveld</option>
-                                        <option value="dropdown" <?php echo $editing && $question_to_edit->field_type === 'dropdown' ? 'selected' : ''; ?>>Dropdown</option>
-                                        <option value="multiselect" <?php echo $editing && $question_to_edit->field_type === 'multiselect' ? 'selected' : ''; ?>>Meervoudige selectie</option>
+                                        <option value="text" <?php echo $editing && isset($question_to_edit->field_type) && $question_to_edit->field_type === 'text' ? 'selected' : ''; ?>>Tekstveld</option>
+                                        <option value="dropdown" <?php echo $editing && isset($question_to_edit->field_type) && $question_to_edit->field_type === 'dropdown' ? 'selected' : ''; ?>>Dropdown</option>
+                                        <option value="multiselect" <?php echo $editing && isset($question_to_edit->field_type) && $question_to_edit->field_type === 'multiselect' ? 'selected' : ''; ?>>Meervoudige selectie</option>
                                     </select>
                                     <p class="description">Kies het type invoerveld voor deze vraag</p>
                                 </td>
@@ -356,11 +374,193 @@ function onboarding_form_page() {
     <?php
 }
 
+// Add PHP mailer configuration
+add_action('phpmailer_init', 'configure_php_mailer');
+function configure_php_mailer($phpmailer) {
+    // Set up SMTP
+    $phpmailer->isSMTP();
+    $phpmailer->Host = 'smtp.gmail.com'; // Gmail SMTP server
+    $phpmailer->SMTPAuth = true;
+    $phpmailer->Port = 587; // TLS port
+    $phpmailer->SMTPSecure = 'tls';
+    
+    // Set the sender
+    $phpmailer->From = 'wordpress@' . $_SERVER['HTTP_HOST'];
+    $phpmailer->FromName = get_bloginfo('name');
+    
+    // Debug info
+    $debug_messages = array(
+        'Mailer: SMTP',
+        'From: ' . $phpmailer->From,
+        'FromName: ' . $phpmailer->FromName,
+        'Host: ' . $phpmailer->Host,
+        'Port: ' . $phpmailer->Port,
+        'SMTPSecure: ' . $phpmailer->SMTPSecure
+    );
+    update_option('onboarding_mail_debug', $debug_messages);
+}
+
+// Add settings page
+function onboarding_form_settings_page() {
+    $debug_messages = array();
+    
+    if (isset($_POST['save_settings'])) {
+        check_admin_referer('onboarding_settings_nonce', 'settings_nonce');
+        $notification_email = sanitize_email($_POST['notification_email']);
+        $smtp_user = sanitize_text_field($_POST['smtp_user']);
+        $smtp_pass = sanitize_text_field($_POST['smtp_pass']);
+        
+        update_option('onboarding_form_notification_email', $notification_email);
+        update_option('onboarding_form_smtp_user', $smtp_user);
+        if (!empty($smtp_pass)) {
+            update_option('onboarding_form_smtp_pass', $smtp_pass);
+        }
+        echo '<div class="notice notice-success is-dismissible"><p>Instellingen opgeslagen!</p></div>';
+    }
+    
+    if (isset($_POST['test_email'])) {
+        check_admin_referer('onboarding_settings_nonce', 'settings_nonce');
+        $debug_messages = test_wp_mail();
+    }
+    
+    $notification_email = get_option('onboarding_form_notification_email', '');
+    $smtp_user = get_option('onboarding_form_smtp_user', '');
+    ?>
+    <div class="wrap">
+        <h1>Onboarding Form Instellingen</h1>
+        <form method="post" action="">
+            <?php wp_nonce_field('onboarding_settings_nonce', 'settings_nonce'); ?>
+            <table class="form-table">
+                <tr>
+                    <th><label for="notification_email">Notificatie E-mail</label></th>
+                    <td>
+                        <input type="email" name="notification_email" id="notification_email" 
+                               class="regular-text" value="<?php echo esc_attr($notification_email); ?>" required>
+                        <p class="description">E-mailadres waar formulier inzendingen naar worden verzonden.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="smtp_user">SMTP Gebruikersnaam</label></th>
+                    <td>
+                        <input type="text" name="smtp_user" id="smtp_user" 
+                               class="regular-text" value="<?php echo esc_attr($smtp_user); ?>" required>
+                        <p class="description">Gmail adres voor SMTP authenticatie</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="smtp_pass">SMTP Wachtwoord</label></th>
+                    <td>
+                        <input type="password" name="smtp_pass" id="smtp_pass" class="regular-text">
+                        <p class="description">Gmail app-specifiek wachtwoord (laat leeg om bestaand wachtwoord te behouden)</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td>
+                        <input type="submit" name="test_email" class="button" value="Test Email Verzenden">
+                        <span class="description">Klik om een test email te verzenden en de configuratie te controleren.</span>
+                    </td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="save_settings" class="button button-primary" value="Instellingen Opslaan">
+            </p>
+        </form>
+        
+        <?php if (!empty($debug_messages)): ?>
+        <div class="card">
+            <h2>Email Debug Informatie</h2>
+            <pre style="background: #f8f9fa; padding: 15px; border: 1px solid #ddd; overflow: auto;">
+<?php foreach ($debug_messages as $message): ?>
+<?php echo esc_html($message) . "\n"; ?>
+<?php endforeach; ?>
+            </pre>
+        </div>
+        <?php endif; ?>
+        
+        <div class="card">
+            <h2>Gmail SMTP Configuratie Hulp</h2>
+            <p>Om Gmail SMTP te gebruiken, volg deze stappen:</p>
+            <ol>
+                <li>Ga naar je Google Account instellingen</li>
+                <li>Schakel 2-staps verificatie in als je dat nog niet hebt gedaan</li>
+                <li>Ga naar 'App-wachtwoorden' in de beveiligingsinstellingen</li>
+                <li>Maak een nieuw app-wachtwoord aan voor 'Mail' en 'WordPress'</li>
+                <li>Gebruik dit gegenereerde wachtwoord in het SMTP Wachtwoord veld hierboven</li>
+                <li>Gebruik je volledige Gmail adres als SMTP gebruikersnaam</li>
+            </ol>
+        </div>
+    </div>
+    <?php
+}
+
+// Modify the test email function to use SMTP credentials
+function test_wp_mail() {
+    $debug_messages = array();
+    $to = get_option('onboarding_form_notification_email');
+    
+    if (empty($to)) {
+        $debug_messages[] = 'ERROR: No notification email configured';
+        return $debug_messages;
+    }
+    
+    // Add SMTP credentials to PHPMailer
+    add_action('phpmailer_init', function($phpmailer) {
+        $smtp_user = get_option('onboarding_form_smtp_user');
+        $smtp_pass = get_option('onboarding_form_smtp_pass');
+        
+        if (!empty($smtp_user) && !empty($smtp_pass)) {
+            $phpmailer->Username = $smtp_user;
+            $phpmailer->Password = $smtp_pass;
+        }
+    });
+    
+    $debug_messages[] = 'Attempting to send test email to: ' . $to;
+    
+    $subject = 'Test Email from Onboarding Form';
+    $message = 'This is a test email to verify the email sending functionality is working.';
+    $headers = array(
+        'Content-Type: text/plain; charset=UTF-8'
+    );
+    
+    $email_sent = wp_mail($to, $subject, $message, $headers);
+    $debug_messages[] = 'Email sending attempt result: ' . ($email_sent ? 'Success' : 'Failed');
+    
+    if (!$email_sent) {
+        global $phpmailer;
+        if (isset($phpmailer) && is_object($phpmailer)) {
+            $debug_messages[] = 'PHPMailer Error: ' . $phpmailer->ErrorInfo;
+        }
+    }
+    
+    // Get WordPress email settings
+    $debug_messages[] = "\nWordPress Email Configuration:";
+    $debug_messages[] = 'WordPress Email: ' . get_option('admin_email');
+    $debug_messages[] = 'SMTP Plugin Active: ' . (defined('WPMS_PLUGIN_VER') ? 'Yes' : 'No');
+    
+    // Add PHP mailer debug info
+    $php_mail_debug = get_option('onboarding_mail_debug', array());
+    if (!empty($php_mail_debug)) {
+        $debug_messages[] = "\nPHP Mailer Configuration:";
+        foreach ($php_mail_debug as $debug_line) {
+            $debug_messages[] = $debug_line;
+        }
+    }
+    
+    return $debug_messages;
+}
+
 // Register shortcode
 function onboarding_form_shortcode($atts) {
     // Enqueue necessary styles and scripts
     wp_enqueue_style('onboarding-form-style', plugins_url('css/style.css', __FILE__));
     wp_enqueue_script('onboarding-form-script', plugins_url('js/script.js', __FILE__), array('jquery'), '1.0.0', true);
+    
+    // Pass email settings to JavaScript
+    wp_localize_script('onboarding-form-script', 'onboardingFormSettings', array(
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('onboarding_submit_nonce')
+    ));
     
     // Get questions from database
     global $wpdb;
@@ -371,45 +571,48 @@ function onboarding_form_shortcode($atts) {
     ob_start();
     ?>
     <div class="onboarding-form-container">
-        <div class="form-progress">
-            <div class="progress-bar"></div>
-        </div>
-        <div class="form-steps">
-            <?php foreach ($questions as $index => $question): ?>
-            <div class="form-step <?php echo $index === 0 ? 'active' : ''; ?>" data-step="<?php echo $index; ?>">
-                <h2><?php echo esc_html($question->question_text); ?></h2>
-                <?php
-                switch ($question->field_type) {
-                    case 'text':
-                        echo '<input type="text" class="form-input" data-question-id="' . $question->id . '">';
-                        break;
-                    case 'dropdown':
-                        $options = explode("\n", $question->options);
-                        echo '<select class="form-select" data-question-id="' . $question->id . '">';
-                        echo '<option value="">Selecteer een optie</option>';
-                        foreach ($options as $option) {
-                            echo '<option value="' . esc_attr(trim($option)) . '">' . esc_html(trim($option)) . '</option>';
-                        }
-                        echo '</select>';
-                        break;
-                    case 'multiselect':
-                        $options = explode("\n", $question->options);
-                        echo '<div class="multiselect-container" data-question-id="' . $question->id . '">';
-                        foreach ($options as $option) {
-                            echo '<label><input type="checkbox" value="' . esc_attr(trim($option)) . '"> ' . esc_html(trim($option)) . '</label>';
-                        }
-                        echo '</div>';
-                        break;
-                }
-                ?>
+        <form class="onboarding-form" method="post">
+            <div class="form-progress">
+                <div class="progress-bar"></div>
             </div>
-            <?php endforeach; ?>
-        </div>
-        <div class="form-navigation">
-            <button class="prev-step" style="display: none;">Vorige</button>
-            <button class="next-step">Volgende</button>
-            <button class="submit-form" style="display: none;">Versturen</button>
-        </div>
+            <div class="form-steps">
+                <?php foreach ($questions as $index => $question): ?>
+                <div class="form-step <?php echo $index === 0 ? 'active' : ''; ?>" data-step="<?php echo $index; ?>">
+                    <h2><?php echo esc_html($question->question_text); ?></h2>
+                    <?php
+                    switch ($question->field_type) {
+                        case 'text':
+                            echo '<input type="text" class="form-input" name="question_' . $question->id . '" data-question-id="' . $question->id . '">';
+                            break;
+                        case 'dropdown':
+                            $options = explode("\n", $question->options);
+                            echo '<select class="form-select" name="question_' . $question->id . '" data-question-id="' . $question->id . '">';
+                            echo '<option value="">Selecteer een optie</option>';
+                            foreach ($options as $option) {
+                                echo '<option value="' . esc_attr(trim($option)) . '">' . esc_html(trim($option)) . '</option>';
+                            }
+                            echo '</select>';
+                            break;
+                        case 'multiselect':
+                            $options = explode("\n", $question->options);
+                            echo '<div class="multiselect-container" data-question-id="' . $question->id . '">';
+                            foreach ($options as $option) {
+                                $option_value = trim($option);
+                                echo '<label><input type="checkbox" name="question_' . $question->id . '[]" value="' . esc_attr($option_value) . '"> ' . esc_html($option_value) . '</label>';
+                            }
+                            echo '</div>';
+                            break;
+                    }
+                    ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <div class="form-navigation">
+                <button type="button" class="prev-step" style="display: none;">Vorige</button>
+                <button type="button" class="next-step">Volgende</button>
+                <button type="submit" class="submit-form" style="display: none;">Versturen</button>
+            </div>
+        </form>
     </div>
     <?php
     // Return the buffered content
@@ -422,4 +625,60 @@ function register_onboarding_form_widget($widgets_manager) {
     require_once(__DIR__ . '/widgets/onboarding-form-widget.php');
     $widgets_manager->register(new \Onboarding_Form_Widget());
 }
-add_action('elementor/widgets/register', 'register_onboarding_form_widget'); 
+add_action('elementor/widgets/register', 'register_onboarding_form_widget');
+
+// Add AJAX handler for form submissions
+add_action('wp_ajax_onboarding_form_submit', 'handle_onboarding_form_submit');
+add_action('wp_ajax_nopriv_onboarding_form_submit', 'handle_onboarding_form_submit');
+
+function handle_onboarding_form_submit() {
+    check_ajax_referer('onboarding_submit_nonce', 'nonce');
+    
+    $submission_data = $_POST['formData'];
+    $notification_email = get_option('onboarding_form_notification_email');
+    $debug_messages = array();
+    
+    $debug_messages[] = 'Form submission data: ' . print_r($submission_data, true);
+    $debug_messages[] = 'Notification email: ' . $notification_email;
+    
+    // Send email
+    $subject = 'Nieuwe Onboarding Form Inzending';
+    $message = "Er is een nieuwe inzending ontvangen:\n\n";
+    
+    foreach ($submission_data as $question_id => $answer) {
+        $question_text = get_question_text($question_id);
+        $message .= $question_text . ": " . (is_array($answer) ? implode(', ', $answer) : $answer) . "\n";
+    }
+    
+    $headers = array('Content-Type: text/plain; charset=UTF-8');
+    
+    if (!empty($notification_email)) {
+        $email_sent = wp_mail($notification_email, $subject, $message, $headers);
+        $debug_messages[] = 'Email sending attempt result: ' . ($email_sent ? 'Success' : 'Failed');
+        
+        if (!$email_sent) {
+            global $phpmailer;
+            if (isset($phpmailer) && is_object($phpmailer)) {
+                $debug_messages[] = 'PHPMailer Error: ' . $phpmailer->ErrorInfo;
+            }
+        }
+    }
+    
+    wp_send_json_success(array(
+        'message' => 'Formulier succesvol verzonden',
+        'debug' => array(
+            'notification_email' => $notification_email,
+            'submission_data' => $submission_data,
+            'email_sent' => isset($email_sent) ? $email_sent : false,
+            'email_error' => isset($phpmailer) && is_object($phpmailer) ? $phpmailer->ErrorInfo : '',
+            'debug_messages' => $debug_messages
+        )
+    ));
+}
+
+function get_question_text($question_id) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'onboarding_questions';
+    $question = $wpdb->get_var($wpdb->prepare("SELECT question_text FROM $table_name WHERE id = %d", $question_id));
+    return $question ? $question : 'Onbekende vraag';
+} 

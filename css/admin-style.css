@@ -1,3 +1,12 @@
+:root {
+    --color-primary: #000000;
+    --color-secondary: #800020;
+    --color-text: #C0C0C0;
+    --color-accent: #FFBF00;
+    --color-champagne: #F7E7CE;
+    --color-ivory: #FFFAF0;
+}
+
 #wpcontent {
     padding-left: 0 !important;
 }
@@ -16,7 +25,7 @@
 }
 
 .admin-column {
-    min-width: 0; /* Prevents flex items from overflowing */
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
@@ -37,8 +46,8 @@
     min-width: 0; /* Prevents table from forcing container width */
     padding: 30px;
     margin: 0;
-    background: #fff;
-    border: 1px solid #c3c4c7;
+    background-color: var(--color-ivory);
+    border: 1px solid var(--color-text);
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
     position: relative;
 }
@@ -92,6 +101,8 @@
     width: 120px;
     padding: 20px 10px 20px 0;
     vertical-align: top;
+    background-color: var(--color-text);
+    color: var(--color-primary);
 }
 
 .form-table td {
@@ -105,6 +116,9 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    border-color: var(--color-text);
+    background-color: var(--color-ivory);
+    color: var(--color-primary);
 }
 
 /* Options styling */
@@ -130,9 +144,19 @@
     min-height: 35px;
 }
 
+.remove-option {
+    background-color: var(--color-secondary) !important;
+    color: var(--color-ivory) !important;
+}
+
+.add-option {
+    background-color: var(--color-accent) !important;
+    color: var(--color-primary) !important;
+}
+
 /* Drag handle styling */
 .sortable-questions .dashicons-menu {
-    color: #50575e;
+    color: var(--color-text);
     margin-right: 12px;
     cursor: move;
 }
@@ -144,19 +168,18 @@
 /* Drag and drop styling */
 .sortable-questions tr.ui-sortable-helper {
     display: table;
-    border: 1px solid #c3c4c7;
-    background: #fff;
+    border: 1px solid var(--color-text);
+    background-color: var(--color-ivory);
     width: 100%;
 }
 
 .sortable-questions tr {
-    background: #fff;
-    cursor: move;
+    background-color: var(--color-ivory);
 }
 
 /* Description text */
 .description {
-    color: #646970;
+    color: var(--color-text);
     font-style: italic;
     margin: 4px 0;
 }
@@ -165,11 +188,12 @@
 .media-placeholder {
     margin-top: 15px;
     padding: 30px;
-    background: #f0f0f1;
-    border: 1px dashed #c3c4c7;
+    background-color: var(--color-text);
+    border: 2px dashed var(--color-primary);
     text-align: center;
     border-radius: 3px;
     cursor: pointer;
+    color: var(--color-primary);
 }
 
 .media-placeholder:hover {
@@ -180,12 +204,12 @@
     font-size: 30px;
     width: 30px;
     height: 30px;
-    color: #646970;
+    color: var(--color-primary);
 }
 
 .media-placeholder p {
     margin: 10px 0 0;
-    color: #646970;
+    color: var(--color-text);
 }
 
 /* Responsive layout */
@@ -204,7 +228,7 @@
 }
 
 .admin-column.questions-list {
-    max-width: none;
+    max-width: 800px;
     width: 100%;
 }
 
@@ -217,4 +241,60 @@
     max-width: none;
     width: 100%;
     table-layout: fixed;
+}
+
+/* Override WordPress button styles */
+.wp-core-ui .button-primary {
+    background-color: var(--color-accent) !important;
+    border-color: var(--color-accent) !important;
+    color: var(--color-primary) !important;
+}
+
+.wp-core-ui .button-primary:hover {
+    background-color: var(--color-champagne) !important;
+    border-color: var(--color-champagne) !important;
+}
+
+.wp-core-ui .button {
+    background-color: var(--color-text) !important;
+    border-color: var(--color-text) !important;
+    color: var(--color-primary) !important;
+}
+
+.wp-core-ui .button:hover {
+    background-color: var(--color-champagne) !important;
+    border-color: var(--color-champagne) !important;
+}
+
+/* Form elements */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--color-accent) !important;
+    box-shadow: 0 0 0 1px var(--color-accent) !important;
+}
+
+/* Table styles */
+.wp-list-table th {
+    background-color: var(--color-text) !important;
+    color: var(--color-primary) !important;
+}
+
+.wp-list-table tr:nth-child(odd) {
+    background-color: var(--color-ivory) !important;
+}
+
+.wp-list-table tr:nth-child(even) {
+    background-color: var(--color-champagne) !important;
+}
+
+/* Notice styles */
+.notice-success {
+    border-left-color: var(--color-accent) !important;
+}
+
+.notice-error {
+    border-left-color: var(--color-secondary) !important;
 } 
